@@ -11,31 +11,45 @@ function ResetPasswordPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/send-otp", { email });
-      setStep(2);
-      setError("");
+      const response = await axios.post("http://localhost:5000/api/send-otp", { email });
+      if (response.status === 200) {
+        setStep(2);
+        setSuccess("OTP sent to your email!");
+        setError("");
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Failed to send OTP");
+      setSuccess("");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/reset-password", {
+      const response = await axios.post("http://localhost:5000/api/verify-otp", {
         email,
-        otp,
-        newPassword: "" // Temporary empty password for OTP verification only
+        otp
       });
-      setStep(3);
-      setError("");
+      if (response.status === 200) {
+        setStep(3);
+        setSuccess("OTP verified successfully!");
+        setError("");
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Invalid OTP");
+      setSuccess("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,16 +60,21 @@ function ResetPasswordPage() {
       return;
     }
 
+    setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/reset-password", {
+      const response = await axios.post("http://localhost:5000/api/reset-password", {
         email,
         otp,
         newPassword
       });
-      setSuccess("Password updated successfully!");
-      setTimeout(() => navigate("/login"), 2000);
+      if (response.status === 200) {
+        setSuccess("Password updated successfully!");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Password update failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,8 +98,11 @@ function ResetPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
-            <button type="submit">Send OTP</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Sending..." : "Send OTP"}
+            </button>
           </>
         )}
 
@@ -92,8 +114,11 @@ function ResetPasswordPage() {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               required
+              disabled={loading}
             />
-            <button type="submit">Verify OTP</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
           </>
         )}
 
@@ -105,6 +130,7 @@ function ResetPasswordPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
+              disabled={loading}
             />
             <input
               type="password"
@@ -112,8 +138,11 @@ function ResetPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              disabled={loading}
             />
-            <button type="submit">Update Password</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Password"}
+            </button>
           </>
         )}
 
